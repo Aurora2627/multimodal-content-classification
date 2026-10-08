@@ -19,3 +19,14 @@
 ## 使用
 
 见 [运行说明](QUICKSTART.md)、[学习说明](LEARNING.md) 与上层 EXPERIMENT_RULES.md。源码入口：scripts/train_torch.py、scripts/run_baselines.py、scripts/run_phase2.py；模型实现：src/torch_models.py；实验实现：src/torch_runner.py。
+
+## VS Code 与系统 Python
+
+当前开发使用 `/usr/bin/python3`（3.9.6），依赖安装在工作区 `.system-python-packages`，VS Code 自动设置 PYTHONPATH。系统全局包目录未获得写权限。详见 [启动说明](VSCODE_START.md)。
+
+
+## 当前 VS Code / MPS 入口
+
+以后运行统一在 VS Code。打开运行和调试，选择“07 MPS 图文训练（四个模型）”，按 F5，输入新的实验目录名。默认 train_torch.py 已改为 Float32/AdamW，编码器与分类器均使用可用 GPU；旧实验复现必须指定 --optimizer lbfgs，仍使用 CPU。详情见 VSCODE_START.md。
+
+最新实际运行：runs/vscode-mps-v1。四组测试 Macro-F1：文本 0.5191、图像 0.5082、图文线性融合 0.6435、融合 MLP 0.5904。源代码、VS Code 配置、输入哈希、日志与四份 .pt 权重均保存。来源为既有社区子集，单种子且重复使用测试集；这是探索结果。

@@ -1,3 +1,5 @@
+**更新：日常开发已配置系统默认 Python，见 [VS Code 启动说明](VSCODE_START.md)。下方保留原实验环境的复现命令。**
+
 # Python/PyTorch 运行说明
 
 从工作区 /Users/meiying/Documents/Codex/2026-10-07/zhe 运行。独立环境为 .venvs/mm01（Python 3.12），当前 Mac 进程使用 CPU。预训练 CLIP 与 ResNet 权重已本地缓存，CLIP 使用本地加载。
@@ -34,3 +36,10 @@
 ```
 
 每次实验自动保存 Python 源码快照、输入清单副本、环境、配置、哈希、采样 ID、优化日志和 .pt 模型。源代码历史目录仅供追溯；当前训练入口不依赖 scikit-learn/joblib。
+
+
+## 当前 VS Code / MPS 入口
+
+以后运行统一在 VS Code。打开运行和调试，选择“07 MPS 图文训练（四个模型）”，按 F5，输入新的实验目录名。默认 train_torch.py 已改为 Float32/AdamW，编码器与分类器均使用可用 GPU；旧实验复现必须指定 --optimizer lbfgs，仍使用 CPU。详情见 VSCODE_START.md。
+
+最新实际运行：runs/vscode-mps-v1。四组测试 Macro-F1：文本 0.5191、图像 0.5082、图文线性融合 0.6435、融合 MLP 0.5904。源代码、VS Code 配置、输入哈希、日志与四份 .pt 权重均保存。来源为既有社区子集，单种子且重复使用测试集；这是探索结果。
