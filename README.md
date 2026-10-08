@@ -1,53 +1,21 @@
 # 图文内容分类与少样本适配
 
-状态：已在 Mac CPU 完成来源核验、精确/感知哈希过滤、扩大基线评测、5 种子严格少样本实验与模型保存；尚未进行 VLM 微调。
+已完成前两阶段的 Python/PyTorch 重跑，当前所有模型训练、优化、TF-IDF/SVD、标准化与指标使用 Python/PyTorch；源码保存为 .py，模型与特征保存为 .pt。旧实验模型、评测与派生缓存已清除。
 
-方向：多模态/CV
+## 当前结果
 
-对应需求：小红书两份内容治理 JD；OPPO CNN 训练 JD
+- 第一阶段：runs/pytorch-phase1-resnet、runs/pytorch-phase1-clip。
+- 第二阶段：runs/pytorch-phase2-exploratory、runs/pytorch-phase2-verified。
+- 详细报告：[重跑报告](reports/pytorch-rerun-report.md)。
 
-## 任务
+每组保存 source_snapshot、experiment-config.json、source-manifest.json、environment.json、input_manifests、training-log.jsonl、采样 ID、.pt 权重、预测、图表与指标。所有当次源码快照不可修改。
 
-输入图像与文本，预测公开数据集定义的内容类别；不把研究数据标签称为企业真实违规标准。
+当前输入：data/processed/phase1、phase2-exploratory、phase2-verified；原始数据、图片和预训练编码器保留。source_history 仅保留替换前的 Python 源码，不作当前训练入口。
 
-## 实现阶段
+## 范围
 
-1. 文本单模态基线
-2. ResNet 图像分类基线
-3. 冻结 CLIP 编码器并训练融合分类头
-4. 少样本与困难样本实验
-5. 可选：小型 VLM Few-shot 和 LoRA 对比
+公开数据集 6 类图文分类，覆盖内容治理 JD 的分类、数据质量、少样本与模型评测要求；不能直接描述为企业真实违规审核系统。当前编码器冻结，尚未进行 VLM SFT、LoRA 或端到端 CNN 调优。
 
-## 第一阶段起点
+## 使用
 
-先检查 Fakeddit 的数据获取与标签定义，只使用同时具有图像和文本的样本。抽取按类别分层的小子集并保留原划分；去重后再次检查划分。
-
-## 实验与验收
-
-- Macro-F1、各类 Precision/Recall、PR 曲线、混淆矩阵
-- 文本/图像/融合消融，标注数量学习曲线
-- 重复图像及近似文本泄漏检查，固定测试集
-- 错误分布、随机种子、配置和运行日志
-
-## 运行环境
-
-本地先提取小批量特征并训练分类头；小型 ResNet 使用 MPS/CPU。完整 VLM SFT 默认走外部 GPU，具体规模待硬件确认。
-
-不预填效果提升数据；只有可复现的真实结果才进入简历。
-
-## 参考
-
-- https://github.com/entitize/Fakeddit
-- https://github.com/mlfoundations/open_clip
-
-## 当前可运行内容
-
-见 QUICKSTART.md。数据限制见 reports/data-source.md；学习重点见 LEARNING.md。当前正式记录使用 runs/baseline-v2 与 runs/clip-v2；第一阶段报告见 reports/phase1-report.md。编码器冻结，分类头训练；不能称作 CNN 端到端调优成果。
-
-## 第二阶段
-
-当前评测版本：`runs/phase2-verified`，数据清单：`data/processed/phase2-verified`。结果与限制见 [第二阶段报告](reports/phase2-report.md)。文本/图像/融合测试 Macro-F1 为 0.5208/0.4992/0.5896。
-
-## 实验实现与源码保存
-
-后续实验按用户要求使用 Python/PyTorch，详见工作区 EXPERIMENT_RULES.md。新的训练入口为 `scripts/train_torch.py`。每次运行在独立目录保存 `source_snapshot/`、`experiment-config.json`、`source-manifest.json`、`environment.json`、`training-log.jsonl`、`.pt` 权重、指标和预测结果。原 scikit-learn 基线保留为历史对照，不能将后补源码快照当作历史精确版本。
+见 [运行说明](QUICKSTART.md)、[学习说明](LEARNING.md) 与上层 EXPERIMENT_RULES.md。源码入口：scripts/train_torch.py、scripts/run_baselines.py、scripts/run_phase2.py；模型实现：src/torch_models.py；实验实现：src/torch_runner.py。
