@@ -56,6 +56,9 @@ def make_head(dim, hidden=0, architecture="standard"):
     if architecture == "feature-adapter":
         from feature_adapter import FeatureAdapterFusion
         return FeatureAdapterFusion(dim, hidden or 64)
+    if architecture == "gated-mlp":
+        from gated_fusion import GatedMLPFusion
+        return GatedMLPFusion(dim, hidden or 128)
     if architecture != "standard":
         raise ValueError("Unknown classifier architecture")
     return build_head(dim, hidden)

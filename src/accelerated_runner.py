@@ -19,7 +19,7 @@ def execute_accelerated(args):
     if device=='cuda' and not torch.cuda.is_available():raise RuntimeError('CUDA unavailable')
     out=ROOT/args.output;out.mkdir(parents=True,exist_ok=False)
     paths={s:ROOT/args.data/f'{s}.jsonl' for s in ['train','val','test']}
-    config={**vars(args),'framework':'Python/PyTorch','encoder_device':device,'experiment_role':'main-method-initial' if args.include_adapter else 'baseline','classifier_device':device,'preprocessing_device':'cpu','encoder':{'clip':'frozen CLIP ViT-B/32','siglip2':'frozen SigLIP2 Base patch32/256','resnet':'frozen ResNet18 + TF-IDF/SVD'}[args.backend],'classifier_dtype':'float32','optimizer':'torch.optim.AdamW','batch_size':64,'seed':args.seed,'validation_selection':'best epoch by validation macro-F1; no test selection','scope':'fixed community subset; already-used test set; exploratory model comparison','launch_environment':'VS Code terminal/debugger (caller must launch there)'}
+    config={**vars(args),'framework':'Python/PyTorch','encoder_device':device,'experiment_role':'main-method-initial' if (args.include_adapter or args.include_gate) else 'baseline','classifier_device':device,'preprocessing_device':'cpu','encoder':{'clip':'frozen CLIP ViT-B/32','siglip2':'frozen SigLIP2 Base patch32/256','resnet':'frozen ResNet18 + TF-IDF/SVD'}[args.backend],'classifier_dtype':'float32','optimizer':'torch.optim.AdamW','batch_size':64,'seed':args.seed,'validation_selection':'best epoch by validation macro-F1; no test selection','scope':'fixed community subset; already-used test set; exploratory model comparison','launch_environment':'VS Code terminal/debugger (caller must launch there)'}
     model_provenance={}
     if args.backend=='siglip2':
         model_provenance=json.loads((ROOT/'reports/siglip2-download.json').read_text())
@@ -64,13 +64,16 @@ def execute_accelerated(args):
         if args.include_adapter:
             if args.backend=='resnet':raise ValueError('Feature adapter requires paired equal-width encoder features')
             tasks.append(('fusion-feature-adapter','fusion',64))
+        if args.include_gate:
+            if args.backend=='resnet':raise ValueError('Gate requires paired equal-width features')
+            tasks.append(('fusion-gated-mlp','fusion',128))
         for name,mode,hidden in tasks:
-            architecture='feature-adapter' if name=='fusion-feature-adapter' else 'standard'
+            architecture={'fusion-feature-adapter':'feature-adapter','fusion-gated-mlp':'gated-mlp'}.get(name,'standard')
             x=modes[mode]
             model,info=train_head(x['train'],labels['train'],x['val'],labels['val'],device,hidden,args.epochs,args.lr,args.weight_decay,patience=args.patience,seed=args.seed,log=log,tag=name,architecture=architecture)
             with torch.inference_mode():prob=model(x['test'].to(device)).softmax(1).cpu()
             pred=prob.argmax(1);test=classification_metrics(labels['test'],pred,prob)
-            result={**info,'test':test,'architecture':architecture,'role':'main-method' if architecture=='feature-adapter' else 'baseline','trainable_parameters':sum(p.numel() for p in model.parameters() if p.requires_grad)};results[name]=result
+            result={**info,'test':test,'architecture':architecture,'role':'main-method' if architecture!='standard' else 'baseline','trainable_parameters':sum(p.numel() for p in model.parameters() if p.requires_grad)};results[name]=result
             bundle={'state_dict':{k:v.detach().cpu() for k,v in model.state_dict().items()},'input_dim':x['train'].shape[1],'hidden_dim':hidden,'architecture':architecture,'dtype':'float32','mode':mode,'backend':args.backend,'pretrained_model':model_provenance,'scalers':scalers,'text_state':text_state,'seed':args.seed,'training_device':device,'shots':args.shots,'best_epoch':info['best_epoch']}
             artifact=out/f'{name}.pt';torch.save(bundle,artifact)
             restored=load_head(torch.load(artifact,map_location='cpu',weights_only=True),device)
@@ -81,6 +84,33 @@ def execute_accelerated(args):
             result['cpu_gpu_prediction_agreement']=float((cpu_prob.argmax(1)==pred).float().mean())
             with (out/f'{name}-predictions.jsonl').open('w') as f:
                 for row,p,ps in zip(splits['test'],pred,prob):f.write(json.dumps({'id':row['id'],'label':row['label'],'prediction':int(p),'probabilities':ps.tolist()})+'\n')
+            if mode=='fusion' and args.include_gate:
+                # Zero in standardized space means replacing a modality by its train mean.
+                variants={}
+                for removed in ['text','image']:
+                    ablated=x['test'].clone();width=ablated.shape[1]//2
+                    ablated[:, :width] = 0 if removed=='text' else ablated[:, :width]
+                    ablated[:, width:] = 0 if removed=='image' else ablated[:, width:]
+                    variants['missing-'+removed]=ablated
+                shuffled=x['test'].clone();width=shuffled.shape[1]//2
+                permutation=torch.randperm(len(shuffled),generator=torch.Generator().manual_seed(20261008))
+                shuffled[:,width:]=shuffled[permutation,width:]
+                variants['shuffled-image']=shuffled
+                ablations={}
+                for variant,features_variant in variants.items():
+                    with torch.inference_mode():vp=model(features_variant.to(device)).softmax(1).cpu()
+                    ablations[variant]=classification_metrics(labels['test'],vp.argmax(1),vp)
+                    with (out/(name+'-'+variant+'-predictions.jsonl')).open('w') as f:
+                        for row,ps in zip(splits['test'],vp):f.write(json.dumps({'id':row['id'],'label':row['label'],'prediction':int(ps.argmax()),'probabilities':ps.tolist()})+'\n')
+                if architecture=='gated-mlp':
+                    with torch.inference_mode():
+                        neutral=model(x['test'].to(device),neutral_gate=True).softmax(1).cpu()
+                        gates=model.gate_weights(x['test'].to(device)).cpu()
+                    ablations['fixed-neutral-gate']=classification_metrics(labels['test'],neutral.argmax(1),neutral)
+                    with (out/(name+'-gate-diagnostics.jsonl')).open('w') as f:
+                        for row,weights,ps in zip(splits['test'],gates,neutral):f.write(json.dumps({'id':row['id'],'label':row['label'],'gate_weights':weights.tolist(),'neutral_prediction':int(ps.argmax()),'neutral_probabilities':ps.tolist()})+'\n')
+                    result['mean_gate_weights_text_image']=gates.mean(0).tolist()
+                result['ablations']=ablations
             print(name,'test Macro-F1',round(test['macro_f1'],4),'saved',artifact.name,flush=True)
     if device=='mps':torch.mps.synchronize()
     report={'config':config,'sizes':dict(zip(splits,sizes)),'actual_training_size':len(selected),'results':results,'feature_cache_used':used_cache,'feature_seconds':feature_seconds,'training_seconds':time.perf_counter()-training_started,'elapsed_seconds':time.perf_counter()-started,'feature_cache':str(cache.relative_to(ROOT)),'feature_sha256':hashlib.sha256(cache.read_bytes()).hexdigest()}

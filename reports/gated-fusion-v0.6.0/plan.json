@@ -1,0 +1,24 @@
+{
+  "backend": "siglip2",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "shots": [
+    0,
+    2,
+    4
+  ],
+  "gate_hidden": 32,
+  "classifier_hidden": 128,
+  "gate_initialization": "neutral 0.5, matched baseline classifier/RNG",
+  "selection": "validation macro-F1 only; no test selection",
+  "ablations": [
+    "fixed-neutral-gate",
+    "missing-text",
+    "missing-image",
+    "shuffled-image"
+  ],
+  "scope": "frozen encoders; reused test/validation; exploratory; gate has extra parameters"
+}

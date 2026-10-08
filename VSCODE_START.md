@@ -84,3 +84,5 @@ GPU 训练代码的 debugpy 断点、读取 mps:0 参数、单步、继续完成
 特征 Adapter 位于冻结编码器之后，只训练适配器和分类器；不能称为编码器内部微调。严格少样本标准化只拟合当次抽中的训练数据。
 
 官方权重下载若中断，可在 VS Code 运行 `scripts/download_siglip2_segmented.py`，使用系统下载工具分段续传并核对固定官方 SHA256；本机已完成下载。此脚本固定模型版本，更新版本需重新核对官方元数据。
+
+门控融合：选择“11 SigLIP2 门控融合”，F5 后输入新的实验目录名。支持在 src/gated_fusion.py 和 src/accelerated_training.py 下断点；保留系统 Python、PyTorch 与 MPS 配置。全批次入口为 scripts/run_gated_fusion.py。

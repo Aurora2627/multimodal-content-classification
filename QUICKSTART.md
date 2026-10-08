@@ -56,3 +56,14 @@
 ```
 
 单次调试可运行 `scripts/train_torch.py --backend siglip2 --device mps --include-adapter --shots 2 --seed 42 --output runs/新的目录名`。每类 2 条意味着总计 12 条训练样本，验证/测试保持原划分。已有 CLI 的 `--fewshot` 是历史 LBFGS 协议；新 AdamW 协议使用 `--shots`。
+
+## 门控融合实验
+
+在本项目的 VS Code 集成终端运行（系统 Python 与 PYTHONPATH 按上文配置）：
+
+```sh
+/usr/bin/python3 scripts/run_gated_fusion.py
+/usr/bin/python3 scripts/audit_gated_artifacts.py
+```
+
+第一条为新建目录的完整九组实验，后续会自动生成以时间命名的 runs/ 与 reports/ 目录；第二条默认核验已完成的 v0.6.0 实验。核验新报告时使用 `--report reports/新报告目录名`。公开目录 `reports/gated-fusion-v0.6.0` 保留本轮结果，不覆盖。单组调试推荐运行和调试入口“11 SigLIP2 门控融合”，实验目录每次输入新名称。

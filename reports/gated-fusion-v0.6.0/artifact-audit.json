@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "runs": 9,
+  "checkpoints": 54,
+  "checks": [
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k0-s42",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 1007,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k0-s43",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 1007,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k0-s44",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 1007,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k2-s42",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 12,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k2-s43",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 12,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k2-s44",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 12,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k4-s42",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 24,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k4-s43",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 24,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    },
+    {
+      "run": "runs/gated-siglip2-20261008-221635-k4-s44",
+      "source_hashes": 52,
+      "input_hashes": 3,
+      "training_ids": 24,
+      "checkpoints": 6,
+      "device": "mps:0",
+      "baseline_reproduction": "exact macro-F1"
+    }
+  ]
+}
