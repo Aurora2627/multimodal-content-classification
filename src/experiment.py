@@ -14,7 +14,7 @@ def snapshot_run(out, config, manifests=()):
             relative=source.relative_to(ROOT); target=destination/relative
             target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,target)
             files[str(relative)]=hashlib.sha256(source.read_bytes()).hexdigest()
-    for filename in ['README.md','QUICKSTART.md','VSCODE_START.md','requirements-lock.txt','requirements-system-python.txt','requirements-system-python-lock.txt']:
+    for filename in ['PROJECT_SCOPE.md','README.md','QUICKSTART.md','VSCODE_START.md','requirements-lock.txt','requirements-system-python.txt','requirements-system-python-lock.txt']:
         source=ROOT/filename
         if source.exists():shutil.copy2(source,destination/filename)
     manifests=list(manifests)

@@ -7,10 +7,10 @@ from metrics import classification_metrics
 from torch_models import build_head
 
 def train_head(train_x,train_y,val_x,val_y,device,hidden=0,epochs=60,lr=.001,
-               weight_decay=.01,batch_size=64,patience=10,seed=42,log=None,tag=''):
+               weight_decay=.01,batch_size=64,patience=10,seed=42,log=None,tag='',architecture='standard'):
     torch.manual_seed(seed)
     if device=='mps':torch.mps.manual_seed(seed)
-    model=build_head(train_x.shape[1],hidden).float().to(device)
+    model=make_head(train_x.shape[1],hidden,architecture).float().to(device)
     optimizer=torch.optim.AdamW(model.parameters(),lr=lr,weight_decay=weight_decay)
     counts=torch.bincount(train_y.cpu(),minlength=6).float()
     if torch.any(counts==0):raise ValueError('Training must include all six classes')
@@ -47,6 +47,15 @@ def train_head(train_x,train_y,val_x,val_y,device,hidden=0,epochs=60,lr=.001,
 
 def load_head(bundle,device='cpu'):
     dtype=torch.float64 if bundle.get('dtype')=='float64' else torch.float32
-    model=build_head(bundle['input_dim'],bundle.get('hidden_dim',0)).to(dtype=dtype,device=device)
+    model=make_head(bundle['input_dim'],bundle.get('hidden_dim',0),bundle.get('architecture','standard')).to(dtype=dtype,device=device)
     model.load_state_dict(bundle['state_dict']);model.eval()
     return model
+
+
+def make_head(dim, hidden=0, architecture="standard"):
+    if architecture == "feature-adapter":
+        from feature_adapter import FeatureAdapterFusion
+        return FeatureAdapterFusion(dim, hidden or 64)
+    if architecture != "standard":
+        raise ValueError("Unknown classifier architecture")
+    return build_head(dim, hidden)

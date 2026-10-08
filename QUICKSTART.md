@@ -43,3 +43,16 @@
 以后运行统一在 VS Code。打开运行和调试，选择“07 MPS 图文训练（四个模型）”，按 F5，输入新的实验目录名。默认 train_torch.py 已改为 Float32/AdamW，编码器与分类器均使用可用 GPU；旧实验复现必须指定 --optimizer lbfgs，仍使用 CPU。详情见 VSCODE_START.md。
 
 最新实际运行：runs/vscode-mps-v1。四组测试 Macro-F1：文本 0.5191、图像 0.5082、图文线性融合 0.6435、融合 MLP 0.5904。源代码、VS Code 配置、输入哈希、日志与四份 .pt 权重均保存。来源为既有社区子集，单种子且重复使用测试集；这是探索结果。
+
+## 项目主线
+
+见 PROJECT_SCOPE.md 区分 baseline 与主要方法。以下命令只在 VS Code 集成终端运行（使用已配置 PYTHONPATH 的系统 Python）：
+
+```bash
+/usr/bin/python3 scripts/download_siglip2.py
+/usr/bin/python3 scripts/run_encoder_comparison.py
+/usr/bin/python3 scripts/run_fewshot_adapters.py --backend clip
+/usr/bin/python3 scripts/run_fewshot_adapters.py --backend siglip2
+```
+
+单次调试可运行 `scripts/train_torch.py --backend siglip2 --device mps --include-adapter --shots 2 --seed 42 --output runs/新的目录名`。每类 2 条意味着总计 12 条训练样本，验证/测试保持原划分。已有 CLI 的 `--fewshot` 是历史 LBFGS 协议；新 AdamW 协议使用 `--shots`。

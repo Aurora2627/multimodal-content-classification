@@ -73,3 +73,14 @@ Codex 内执行进程的 available=false 与 VS Code 实测不同，不能据此
 实际四组实验为 runs/vscode-mps-v1；源代码快照包含 .vscode、配置和环境锁文件。图文线性融合测试 Macro-F1 0.6435，融合 MLP 0.5904。新协议仍使用既有社区子集与测试集，不能视为独立泛化验证。报告为 runs/vscode-mps-v1/summary.md。
 
 GPU 训练代码的 debugpy 断点、读取 mps:0 参数、单步、继续完成已从 VS Code 终端验证，记录为 reports/vscode-mps-debugger.json。验证脚本使用调试适配器；与在界面点击 F5 的验证区别应保留。
+
+## Baseline 与主要方法的新入口
+
+- `09 SigLIP2 baseline 与特征 Adapter`：单次全量实验，输入新目录名。
+- `10 三种子编码器与 Adapter 对比`：固定种子 42/43/44，逐个运行 CLIP 与 SigLIP2；下载准备失败时保留已完成结果。
+- 严格少样本入口：在 VS Code 集成终端用系统 Python 运行 `scripts/run_fewshot_adapters.py --backend clip` 或 `--backend siglip2`。
+- SigLIP2 官方模型下载脚本为 `scripts/download_siglip2.py`；需要网络，训练与预测仍从本地缓存离线加载。模型版本 SHA 与文件哈希保存于 reports/siglip2-download.json。
+
+特征 Adapter 位于冻结编码器之后，只训练适配器和分类器；不能称为编码器内部微调。严格少样本标准化只拟合当次抽中的训练数据。
+
+官方权重下载若中断，可在 VS Code 运行 `scripts/download_siglip2_segmented.py`，使用系统下载工具分段续传并核对固定官方 SHA256；本机已完成下载。此脚本固定模型版本，更新版本需重新核对官方元数据。

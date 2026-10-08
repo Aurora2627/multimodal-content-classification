@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import torch
 from PIL import Image
@@ -42,4 +43,29 @@ def extract_clip(rows, device, batch_size=8, model_name="openai/clip-vit-base-pa
             outputs = model(**{k:v.to(device) for k,v in inputs.items()})
             image_features.append(outputs.image_embeds.cpu().numpy())
             text_features.append(outputs.text_embeds.cpu().numpy())
+    return np.concatenate(image_features), np.concatenate(text_features)
+
+
+def extract_siglip2(rows, device, batch_size=8, model_name="google/siglip2-base-patch32-256", revision=None):
+    """Fixed-resolution SigLIP 2; frozen normalized pooled image/text features."""
+    from transformers import AutoModel, AutoProcessor
+    if revision is None:
+        revision = json.loads((ROOT / "reports/siglip2-download.json").read_text())["revision"]
+    model = AutoModel.from_pretrained(model_name, revision=revision, local_files_only=True).eval().to(device)
+    processor = AutoProcessor.from_pretrained(model_name, revision=revision, local_files_only=True)
+    image_features, text_features = [], []
+    with torch.inference_mode():
+        for start in range(0, len(rows), batch_size):
+            batch = rows[start:start + batch_size]
+            images = []
+            for row in batch:
+                with Image.open(ROOT / row["image"]) as image:
+                    images.append(image.convert("RGB").copy())
+            inputs = processor(text=[r["text"] for r in batch], images=images,
+                               padding="max_length", max_length=64,
+                               truncation=True, return_tensors="pt")
+            outputs = model(**{k: v.to(device) for k, v in inputs.items()})
+            image_features.append(outputs.image_embeds.cpu().numpy())
+            text_features.append(outputs.text_embeds.cpu().numpy())
+            print("SigLIP2 encoded", min(start + batch_size, len(rows)), "/", len(rows), flush=True)
     return np.concatenate(image_features), np.concatenate(text_features)

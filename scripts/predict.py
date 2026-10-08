@@ -5,7 +5,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from data import ROOT
 os.environ.setdefault('TORCH_HOME',str(ROOT/'data/cache/torch'));os.environ.setdefault('HF_HOME',str(ROOT/'data/cache/huggingface'));os.environ.setdefault('HF_HUB_OFFLINE','1')
 import torch
-from features import choose_device,extract_clip,extract_images
+from features import choose_device,extract_clip,extract_images,extract_siglip2
 from torch_models import text_features,standardize
 from accelerated_training import load_head
 
@@ -13,8 +13,10 @@ def predict(artifact,image_path,text_input,requested_device='auto'):
     bundle=torch.load(ROOT/artifact,map_location='cpu',weights_only=True)
     device=choose_device(requested_device)
     rows=[{'text':text_input,'image':str(Path(image_path).resolve())}]
-    if bundle['backend']=='clip':
-        image,text=extract_clip(rows,device);text=torch.from_numpy(text).double()
+    if bundle['backend'] in ['clip','siglip2']:
+        extractor=extract_clip if bundle['backend']=='clip' else extract_siglip2
+        kwargs={"revision":bundle.get("pretrained_model",{}).get("revision")} if bundle["backend"]=="siglip2" else {}
+        image,text=extractor(rows,device,**kwargs);text=torch.from_numpy(text).double()
     else:image=extract_images(rows,device);text=text_features([text_input],bundle['text_state'])
     image=torch.from_numpy(image).double();text=standardize(text,bundle['scalers'][0]);image=standardize(image,bundle['scalers'][1])
     x={'text':text,'image':image,'fusion':torch.cat([text,image],dim=1)}[bundle['mode']]
