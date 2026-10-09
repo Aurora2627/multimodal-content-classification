@@ -1,5 +1,7 @@
 # 图文内容分类与少样本适配
 
+**状态：按用户要求于 2026-10-08 搁置，停止新增实验。后续多模态项目集中于 LLaVA 与 Qwen3-VL。已有源码、数据和结果保留。**
+
 **项目主线：双模态特征适配、少样本评估和融合分析。现有 CLIP/ResNet 实验是 baseline；SigLIP 2 冻结特征是新增 baseline，模型更新本身不是主要贡献。**
 
 见 [Baseline 与主要工作边界](PROJECT_SCOPE.md)。新增特征 Adapter 位于 src/feature_adapter.py，尚不能描述为编码器内部微调。
